@@ -53,9 +53,15 @@ if __name__ == "__main__":
 	r = rospy.Rate(5) # 10hz
 	velocity = Twist()
 	while not rospy.is_shutdown():
-		# FACA SEU CODIGO AQUI
+		if (len(laser.ranges) > 0):
+			if (min(laser.ranges[90:270]) > .25):
+				velocity.linear.x = random.uniform(-.1, -.25)
+				velocity.angular.z = .0
+			else:
+				velocity.linear.x = .0
+				velocity.angular.z = .25
 
-		velocity.linear.x = 0.0
+		# rospy.loginfo("pose: %s", pose.position)
 		pub.publish(velocity)
 				
 		r.sleep()
