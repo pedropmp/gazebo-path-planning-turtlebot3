@@ -49,38 +49,50 @@ def path_planning():
 	index_x = int(pose.position.x * map_resolution)
 	index_y = int(pose.position.y * map_resolution)
 	where_is_the_closest = look_for_closer(index_x, index_y)
-	rospy.loginfo("where if the closest: %s", where_is_the_closest)
+	rospy.loginfo("where is the closest: %s", where_is_the_closest)
+	return where_is_the_closest
 
 def look_for_closer(index_x, index_y):
-	rospy.loginfo("where i am:")
-	rospy.loginfo("index x: %s", index_x)
-	rospy.loginfo("index y: %s", index_y)
-	for d in range(0, 3):
-		rospy.loginfo("left: %s", 	_map[_map.shape[0] - (index_y - 1),			index_x - d])
-		rospy.loginfo("right: %s", 	_map[_map.shape[0] - (index_y - 1),			index_x + d])
-		rospy.loginfo("up: %s", 	_map[_map.shape[0] - (index_y - 1 + d),		index_x])
-		rospy.loginfo("down: %s", 	_map[_map.shape[0] - (index_y - 1 - d),		index_x])
+	# rospy.loginfo("where i am:")
+	# rospy.loginfo("index x: %s", index_x)
+	# rospy.loginfo("index y: %s", index_y)
+	# for d in range(0, 3):
+	# 	rospy.loginfo("left: %s", 	_map[_map.shape[0] - (index_y - 1),			index_x - d])
+	# 	rospy.loginfo("right: %s", 	_map[_map.shape[0] - (index_y - 1),			index_x + d])
+	# 	rospy.loginfo("up: %s", 	_map[_map.shape[0] - (index_y - 1 + d),		index_x])
+	# 	rospy.loginfo("down: %s", 	_map[_map.shape[0] - (index_y - 1 - d),		index_x])
 
 	d = 1
 	while d < 15:
-		if _map[_map.shape[0] - (index_y), index_x - d] == 1:
+		if _map[_map.shape[0] - (index_y - 1), index_x - d] == 1:
 			return "left"
-		if _map[_map.shape[0] - (index_y), index_x + d] == 1:
+		if _map[_map.shape[0] - (index_y - 1), index_x + d] == 1:
 			return "right"
-		if _map[_map.shape[0] - (index_y + d - 1), index_x] == 1:
+		if _map[_map.shape[0] - (index_y - 1 + d), index_x] == 1:
 			return "up"
-		if _map[_map.shape[0] - (index_y + d - 1), index_x] == 1:
+		if _map[_map.shape[0] - (index_y - 1 - d), index_x] == 1:
 			return "down"
 		d += 1
 
-def navigation():
-	if (min(laser.ranges[90:270]) > .25):
-		velocity.linear.x = random.uniform(-.1, -.25)
-		velocity.angular.z = .0
-	else:
-		velocity.linear.x = .0
-		velocity.angular.z = .25
-	pass
+def navigation(where_to_go):
+	# if where_to_go = "left":
+	# 	if 
+	
+	orientation_q = pose.orientation
+	# rospy.loginfo("quaternion: %s", orientation_q)
+	orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
+	(roll, pitch, yaw) = euler_from_quaternion(orientation_list)
+	rospy.loginfo("roll: %s", roll)
+	rospy.loginfo("pitch: %s", pitch)
+	rospy.loginfo("yaw: %s", yaw)
+
+	# if (min(laser.ranges[90:270]) > .25):
+	# 	velocity.linear.x = random.uniform(-.1, -.25)
+	# 	velocity.angular.z = .0
+	# else:
+	# 	velocity.linear.x = .0
+	# 	velocity.angular.z = .25
+	# pass
 
 if __name__ == "__main__": 
 	rospy.init_node("path_controller_node", anonymous=False)  
@@ -96,7 +108,9 @@ if __name__ == "__main__":
 	rospy.sleep(5)
 	while not rospy.is_shutdown():
 		where_to_go = path_planning()
-		# pub.publish(velocity)	
+		navigation(where_to_go)
+		velocity.linear.x = .1
+		pub.publish(velocity)	
 		r.sleep()
 
 # DISCRETE MAP 		
