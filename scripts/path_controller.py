@@ -99,12 +99,12 @@ def look_for_closer(index_x, index_y):
 
 def navigation(where_to_go):
 	global velocity
-	YAW_ERROR = random.uniform(.3, .5)
+	YAW_ERROR = random.uniform(.1, .5)
 	YAW_VELOCITY = .4
 	LINEAR_VELOCITY = .15
 	OBJECT_NEARBY_DISTANCE = .2
-	OBJECT_AHEAD_DISTANCE = .35
-	OBJECT_CLOSE_CORNER = .25
+	OBJECT_AHEAD_DISTANCE = random.uniform(.3, .4)
+	OBJECT_CLOSE_CORNER = random.uniform(.25, .35)
 
 	orientation_q = pose.orientation
 	# rospy.loginfo("quaternion: %s", orientation_q)
@@ -130,33 +130,56 @@ def navigation(where_to_go):
 			velocity.angular.z = .0
 	else:
 		if where_to_go == "left":
-			if abs(yaw - math.pi) < YAW_ERROR:
-				velocity.linear.x = LINEAR_VELOCITY
-				velocity.angular.z = .0
-			else:
+			# turn CCW
+			if yaw - math.pi > YAW_ERROR and yaw > 0:
 				velocity.linear.x = .0
 				velocity.angular.z = YAW_VELOCITY
+			#turn CW
+			elif yaw + math.pi > YAW_ERROR and yaw < 0:
+				velocity.linear.x = .0
+				velocity.angular.z = -YAW_VELOCITY
+			else:
+				velocity.linear.x = LINEAR_VELOCITY
+				velocity.angular.z = .0
+
+
 		if where_to_go == "down":
-			if abs(yaw + math.pi / 2) < YAW_ERROR:
-				velocity.linear.x = LINEAR_VELOCITY
-				velocity.angular.z = .0
-			else:
+			# turn CCW
+			if abs(yaw + math.pi / 2) > YAW_ERROR and abs(yaw) > math.pi / 2: 
 				velocity.linear.x = .0
 				velocity.angular.z = YAW_VELOCITY
+			# turn CW
+			elif abs(yaw + math.pi / 2) > YAW_ERROR and abs(yaw) < math.pi / 2:
+				velocity.linear.x = .0
+				velocity.angular.z = -YAW_VELOCITY
+			else:
+				velocity.linear.x = LINEAR_VELOCITY
+				velocity.angular.z = .0
+				
 		if where_to_go == "right":
-			if abs(yaw) < YAW_ERROR:
-				velocity.linear.x = LINEAR_VELOCITY
-				velocity.angular.z = .0
-			else:
+			# turn CCW
+			if abs(yaw) > YAW_ERROR and yaw < 0:
 				velocity.linear.x = .0
 				velocity.angular.z = YAW_VELOCITY
+			# turn CW
+			elif abs(yaw) > YAW_ERROR and yaw > 0:
+				velocity.linear.x = .0
+				velocity.angular.z = -YAW_VELOCITY
+			else:
+				velocity.linear.x = LINEAR_VELOCITY
+				velocity.angular.z = .0
+				
 		if where_to_go == "up":
-			if abs(yaw - math.pi / 2) < YAW_ERROR:
-				velocity.linear.x = LINEAR_VELOCITY
-				velocity.angular.z = .0
-			else:
+			if abs(yaw - math.pi / 2) > YAW_ERROR and abs(yaw) < math.pi / 2:
 				velocity.linear.x = .0
 				velocity.angular.z = YAW_VELOCITY
+			elif abs(yaw - math.pi / 2) > YAW_ERROR and abs(yaw) > math.pi / 2:
+				velocity.linear.x = .0
+				velocity.angular.z = -YAW_VELOCITY
+			else:
+				velocity.linear.x = LINEAR_VELOCITY
+				velocity.angular.z = .0
+				
 	# if (min(laser.ranges[90:270]) > .25):
 	# 	velocity.linear.x = random.uniform(-.1, -.25)
 	# 	velocity.angular.z = .0
