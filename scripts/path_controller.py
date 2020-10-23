@@ -42,7 +42,7 @@ def path_callback(data):
 	if (_map[_map.shape[0] - index_y][index_x] == 1):	# numero de linhas - index_y
 		_map[_map.shape[0] - index_y][index_x] = 2
 	
-		rospy.loginfo("Another part mowed ... percentage total aspirated.... %s ", 100*float(np.count_nonzero(_map == 2))/np.count_nonzero(_map == 1) )
+		rospy.loginfo("Another part mowed ... percentage total aspirated.... %s ", 100*float(np.count_nonzero(_map == 2))/(np.count_nonzero(_map == 1) + np.count_nonzero(_map == 2)))
 		rospy.loginfo("Discrete Map")
 		rospy.loginfo("%s", str(_map))
 	
@@ -63,79 +63,85 @@ def path_planning():
 
 	where_is_the_closest = look_for_closer(index_x, index_y)
 	seconds = rospy.get_time()
-	if seconds % 5 < .01:
-		rospy.loginfo("where is the closest: %s", where_is_the_closest)
+	# if seconds % 1 < .01:
+	# rospy.loginfo("where is the closest: %s", where_is_the_closest)
 	return where_is_the_closest
-	# return "down"
 
 def look_for_closer(index_x, index_y):
-	# problema a ser corrigido: existe uma incerteza associada a posicao do veiculo no mapa discretizado
-	# seconds = rospy.get_time()
-	# if seconds % 5 < .01:
-	# 	rospy.loginfo("where i am:")
-	# 	rospy.loginfo("x: %s", index_x)
-	# 	rospy.loginfo("y: %s", _map.shape[0] - index_y)
-	# 	rospy.loginfo("my cell: %s", _map[_map.shape[0] - index_y, index_x])
-	# 	rospy.loginfo("left: %s", 	_map[_map.shape[0] - (index_y),			index_x - d])
-	# 	rospy.loginfo("right: %s", 	_map[_map.shape[0] - (index_y),			index_x + d])
-	# 	rospy.loginfo("up: %s", 	_map[_map.shape[0] - (index_y + d),		index_x])
-	# 	rospy.loginfo("down: %s", 	_map[_map.shape[0] - (index_y - d),		index_x])
-
+	left_wall = False
+	down_wall = False
+	right_wall = False
+	up_wall = False
 	d = 1
-	while d < 15:
-		if (index_x - d) >= 0:
-			if _map[_map.shape[0] - (index_y), 		index_x - d] 	== 1:
+	while d < 20:
+		row = _map.shape[0] - (index_y)
+		column = index_x
+		row_max = _map.shape[0]
+		column_max = _map.shape[1]
+		if (column - d) >= 0 and not left_wall:
+			if _map[row, column - d] == 1:
 				return "left"
-		if (_map.shape[0] - (index_y - d)) > 0 and (_map.shape[0] - (index_y - d)) < _map.shape[0]:
-			if _map[_map.shape[0] - (index_y - d), 	index_x] 		== 1:
+			elif _map[row, column - d] == 0:
+				left_wall = True
+
+		if (row + d) >= 0 and (row + d) < row_max and not down_wall:
+			if _map[_map.shape[0] - (index_y - d), index_x] == 1:
 				return "down"
-		if (index_x + d) < _map.shape[1]:
-			if _map[_map.shape[0] - (index_y), 		index_x + d] 	== 1:
+			elif _map[_map.shape[0] - (index_y - d), index_x] == 0:
+				down_wall = True
+
+		if (column + d) < column_max and not right_wall:
+			if _map[_map.shape[0] - (index_y), index_x + d] == 1:
 				return "right"
-		if (_map.shape[0] - (index_y + d)) >= 1:
-			if _map[_map.shape[0] - (index_y + d), 		index_x] 		== 1:
+			elif _map[_map.shape[0] - (index_y), index_x + d] == 0:
+				right_wall = True
+
+		if (row - d) >= 0 and not up_wall:
+			if _map[_map.shape[0] - (index_y + d), index_x] == 1:
 				return "up"
+			if _map[_map.shape[0] - (index_y + d), index_x] == 0:
+				up_wall = True
 		d += 1
 
 def navigation(where_to_go):
 	global velocity
-	YAW_ERROR = random.uniform(.1, .5)
-	YAW_VELOCITY = .4
-	LINEAR_VELOCITY = .15
-	OBJECT_NEARBY_DISTANCE = .2
-	OBJECT_AHEAD_DISTANCE = random.uniform(.3, .4)
-	OBJECT_CLOSE_CORNER = random.uniform(.25, .35)
+	YAW_ERROR = random.uniform(.1, .2)
+	YAW_VELOCITY = .8
+	LINEAR_VELOCITY = .28
+	OBJECT_NEARBY_DISTANCE = random.uniform(.4, .5)
+	OBJECT_AHEAD_DISTANCE = .3
+	OBJECT_CLOSE_CORNER = OBJECT_AHEAD_DISTANCE
 
 	orientation_q = pose.orientation
-	# rospy.loginfo("quaternion: %s", orientation_q)
 	orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
 	(roll, pitch, yaw) = euler_from_quaternion(orientation_list)
-	# rospy.loginfo("roll: %s", roll)
-	# rospy.loginfo("pitch: %s", pitch)
 	seconds = rospy.get_time()
-	# if seconds % 2 < .1:
-	# rospy.loginfo("yaw: %s", yaw)
-		# rospy.loginfo("min(laser): %s", min(laser.ranges))
-		# rospy.loginfo("min(0): %s", laser.ranges[0])
-		# rospy.loginfo("min(270): %s", laser.ranges[270])
 
 	if min(laser.ranges) < OBJECT_NEARBY_DISTANCE:
-		if (min(laser.ranges[0:30]) < OBJECT_AHEAD_DISTANCE or min(laser.ranges[329:359]) < OBJECT_AHEAD_DISTANCE or min(laser.ranges[31:71]) < OBJECT_CLOSE_CORNER or min(laser.ranges[288:328]) < OBJECT_CLOSE_CORNER):
-			# rospy.loginfo("turning CCW")
+		if (
+				min(laser.ranges[0:30]) < OBJECT_AHEAD_DISTANCE or 
+				min(laser.ranges[31:41]) < OBJECT_CLOSE_CORNER
+			):
+			velocity.linear.x = .0
+			velocity.angular.z = -YAW_VELOCITY
+		elif (
+				min(laser.ranges[329:-1]) < OBJECT_AHEAD_DISTANCE or 
+				min(laser.ranges[318:328]) < OBJECT_CLOSE_CORNER
+			):
 			velocity.linear.x = .0
 			velocity.angular.z = YAW_VELOCITY
 		else:
-			# rospy.loginfo("moving FW")
-			velocity.linear.x = LINEAR_VELOCITY
+			velocity.linear.x = LINEAR_VELOCITY * .8
 			velocity.angular.z = .0
+
 	else:
 		if where_to_go == "left":
 			# turn CCW
-			if yaw - math.pi > YAW_ERROR and yaw > 0:
+			if math.pi - yaw > YAW_ERROR and yaw > 0:
 				velocity.linear.x = .0
 				velocity.angular.z = YAW_VELOCITY
 			#turn CW
-			elif yaw + math.pi > YAW_ERROR and yaw < 0:
+			elif math.pi + yaw > YAW_ERROR and yaw < 0:
 				velocity.linear.x = .0
 				velocity.angular.z = -YAW_VELOCITY
 			else:
@@ -179,14 +185,6 @@ def navigation(where_to_go):
 			else:
 				velocity.linear.x = LINEAR_VELOCITY
 				velocity.angular.z = .0
-				
-	# if (min(laser.ranges[90:270]) > .25):
-	# 	velocity.linear.x = random.uniform(-.1, -.25)
-	# 	velocity.angular.z = .0
-	# else:
-	# 	velocity.linear.x = .0
-	# 	velocity.angular.z = .25
-	# pass
 
 if __name__ == "__main__": 
 	rospy.init_node("path_controller_node", anonymous=False)  
