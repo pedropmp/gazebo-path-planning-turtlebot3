@@ -102,13 +102,14 @@ def look_for_closer(index_x, index_y):
 			if _map[_map.shape[0] - (index_y + d), index_x] == 0:
 				up_wall = True
 		d += 1
+		return "random"
 
 def navigation(where_to_go):
 	global velocity
 	YAW_ERROR = random.uniform(.1, .2)
 	YAW_VELOCITY = .8
 	LINEAR_VELOCITY = .28
-	OBJECT_NEARBY_DISTANCE = random.uniform(.4, .5)
+	OBJECT_NEARBY_DISTANCE = random.uniform(.35, .4)
 	OBJECT_AHEAD_DISTANCE = .3
 	OBJECT_CLOSE_CORNER = OBJECT_AHEAD_DISTANCE
 
@@ -149,7 +150,7 @@ def navigation(where_to_go):
 				velocity.angular.z = .0
 
 
-		if where_to_go == "down":
+		elif where_to_go == "down":
 			# turn CCW
 			if abs(yaw + math.pi / 2) > YAW_ERROR and abs(yaw) > math.pi / 2: 
 				velocity.linear.x = .0
@@ -162,7 +163,7 @@ def navigation(where_to_go):
 				velocity.linear.x = LINEAR_VELOCITY
 				velocity.angular.z = .0
 				
-		if where_to_go == "right":
+		elif where_to_go == "right":
 			# turn CCW
 			if abs(yaw) > YAW_ERROR and yaw < 0:
 				velocity.linear.x = .0
@@ -175,7 +176,7 @@ def navigation(where_to_go):
 				velocity.linear.x = LINEAR_VELOCITY
 				velocity.angular.z = .0
 				
-		if where_to_go == "up":
+		elif where_to_go == "up":
 			if abs(yaw - math.pi / 2) > YAW_ERROR and abs(yaw) < math.pi / 2:
 				velocity.linear.x = .0
 				velocity.angular.z = YAW_VELOCITY
@@ -185,6 +186,10 @@ def navigation(where_to_go):
 			else:
 				velocity.linear.x = LINEAR_VELOCITY
 				velocity.angular.z = .0
+		
+		elif where_to_go == "random":
+			velocity.linear.x = random.uniform(LINEAR_VELOCITY*.5, LINEAR_VELOCITY)
+			velocity.angular.z = random.uniform(-YAW_VELOCITY, YAW_VELOCITY)
 
 if __name__ == "__main__": 
 	rospy.init_node("path_controller_node", anonymous=False)  
