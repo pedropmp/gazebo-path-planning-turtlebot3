@@ -24,9 +24,6 @@ def path_callback(data):
 	global pose
 	pose = data.pose[-1]
 	seconds = rospy.get_time()
-	# if seconds % 5 < .01:
-	# 	rospy.loginfo("pose x: %s", pose.position.x)
-	# 	rospy.loginfo("pose y: %s", pose.position.y)
 
 	index_x = int(pose.position.x*map_resolution)
 	index_y = int(pose.position.y*map_resolution)
@@ -35,13 +32,10 @@ def path_callback(data):
 	if (index_x <= 0): index_x = 1
 	if (index_x > _map.shape[1]): index_x = _map.shape[1]
 
-	# if seconds % .1 < .01:
-	# 	rospy.loginfo("index x: %s", index_x)
-	# 	rospy.loginfo("index y: %s", _map.shape[0] - index_y)
-
 	if (_map[_map.shape[0] - index_y][index_x] == 1):	# numero de linhas - index_y
 		_map[_map.shape[0] - index_y][index_x] = 2
-	
+
+		# porcentagem corrigida
 		rospy.loginfo("Another part mowed ... percentage total aspirated.... %s ", 100*float(np.count_nonzero(_map == 2))/(np.count_nonzero(_map == 1) + np.count_nonzero(_map == 2)))
 		rospy.loginfo("Discrete Map")
 		rospy.loginfo("%s", str(_map))
@@ -50,8 +44,6 @@ def laser_callback(data):
 	global laser
 	laser = data
 	seconds = rospy.get_time()
-	# if seconds % 10 < .1:
-	# 	rospy.loginfo("laser: %s", laser.ranges)
 
 def path_planning():
 	index_x = int(pose.position.x * map_resolution)
@@ -63,8 +55,6 @@ def path_planning():
 
 	where_is_the_closest = look_for_closer(index_x, index_y)
 	seconds = rospy.get_time()
-	# if seconds % 1 < .01:
-	# rospy.loginfo("where is the closest: %s", where_is_the_closest)
 	return where_is_the_closest
 
 def look_for_closer(index_x, index_y):
@@ -177,9 +167,11 @@ def navigation(where_to_go):
 				velocity.angular.z = .0
 				
 		elif where_to_go == "up":
+			# turn CCW
 			if abs(yaw - math.pi / 2) > YAW_ERROR and abs(yaw) < math.pi / 2:
 				velocity.linear.x = .0
 				velocity.angular.z = YAW_VELOCITY
+			# turn CW
 			elif abs(yaw - math.pi / 2) > YAW_ERROR and abs(yaw) > math.pi / 2:
 				velocity.linear.x = .0
 				velocity.angular.z = -YAW_VELOCITY
